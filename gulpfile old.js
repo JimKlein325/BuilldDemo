@@ -4,7 +4,6 @@ var source = require('vinyl-source-stream');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');//minification
 var utilities = require('gulp-util');
-var del = require('del');
 var jshint = require('gulp-jshint');
 var lib = require('bower-files')({
   "overrides":{
@@ -30,39 +29,40 @@ gulp.task('myTask', function(){
 });
 gulp.task('concatInterface', function() {
   return gulp.src(['./js/*-interface.js'])
-  .pipe(concat('allConcat.js'))
-  .pipe(gulp.dest('./tmp'));
+    .pipe(concat('allConcat.js'))
+    .pipe(gulp.dest('./tmp'));
 });
 gulp.task('jsBrowserify', ['concatInterface'], function() {
   return browserify({ entries: ['./tmp/allConcat.js'] })
-  .bundle()
-  .pipe(source('app.js'))
-  .pipe(gulp.dest('./build/js'));
+    .bundle()
+    .pipe(source('app.js'))
+    .pipe(gulp.dest('./build/js'));
 });
 gulp.task("minifyScripts", ["jsBrowserify"], function(){
   return gulp.src("./build/js/app.js")
-  .pipe(uglify())
-  .pipe(gulp.dest("./build/js"));
+    .pipe(uglify())
+    .pipe(gulp.dest("./build/js"));
 });
-// gulp.task("build", function(){
-//   if (buildProduction) {
-//     gulp.start('minifyScripts');
-//   } else {
-//     gulp.start('jsBrowserify');
-//   }
-// });
-
 gulp.task("clean", function(){
   return del(['build', 'tmp']);
 });
+gulp.task("build", ['clean'], function(){
+  if (buildProduction) {
+    gulp.start('minifyScripts');
+  } else {
+    gulp.start('jsBrowserify');
+  }
+});
+//Build Tasks
+});
 
+//jshintgulp.task('jshint', function(){
+gulp.task('jshint', function(){
+  return gulp.src(['js/*.js'])
+    .pipe(jshint())
+    .pipe(jshint.reporter('default'));
+});
 
-// //Build Tasks
-//
-//
-// //jshintgulp.task('jshint', function(){
-
-//
 gulp.task('build', ['clean'], function(){
   if (buildProduction) {
     gulp.start('minifyScripts');
@@ -70,42 +70,21 @@ gulp.task('build', ['clean'], function(){
     gulp.start('jsBrowserify');
   }
   gulp.start('bower');
-});
-  //Bower Tasks
-  gulp.task('bowerJS', function () {
-    return gulp.src(lib.ext('js').files)
+
+//Bower Tasks
+gulp.task('bowerJS', function () {
+  return gulp.src(lib.ext('js').files)
     .pipe(concat('vendor.min.js'))
     .pipe(uglify())
     .pipe(gulp.dest('./build/js'));
-  });
-  gulp.task('bowerCSS', function () {
-    return gulp.src(lib.ext('css').files)
+});
+gulp.task('bowerCSS', function () {
+  return gulp.src(lib.ext('css').files)
     .pipe(concat('vendor.css'))
     .pipe(gulp.dest('./build/css'));
-  });
-  gulp.task('bower', ['bowerJS', 'bowerCSS']);
-//
-//     gulp.watch(['js/*.js'], ['jsBuild']);
-//     gulp.watch(['bower.json'], ['bowerBuild']);
-//     gulp.watch(['*.html'], ['htmlBuild']);
-//   });
-//   gulp.task('bowerBuild', ['bower'], function(){
-//     browserSync.reload();
-//   });
-//   gulp.task('htmlBuild', function() {
-//     browserSync.reload();
-//   });
-// serve
-
-gulp.task('jsBuild', ['jsBrowserify', 'jshint'], function(){
-  browserSync.reload();
 });
-  gulp.task('bowerBuild', ['bower'], function(){
-    browserSync.reload();
-  });
-  gulp.task('htmlBuild', function() {
-    browserSync.reload();
-  });
+
+gulp.task('bower', ['bowerJS', 'bowerCSS']);
 
 gulp.task('serve', function() {
   browserSync.init({
@@ -114,14 +93,18 @@ gulp.task('serve', function() {
       index: "index.html"
     }
   });
+
   gulp.watch(['js/*.js'], ['jsBuild']);
   gulp.watch(['bower.json'], ['bowerBuild']);
   gulp.watch(['*.html'], ['htmlBuild']);
 });
+gulp.task('bowerBuild', ['bower'], function(){
+  browserSync.reload();
+});
+gulp.task('htmlBuild', function() {
+  browserSync.reload();
+});
 
-//at the bottom of the file since this is not a build task
-gulp.task('jshint', function(){
-  return gulp.src(['js/*.js'])
-  .pipe(jshint())
-  .pipe(jshint.reporter('default'));
+task('jsBuild', ['jsBrowserify', 'jshint'], function(){
+  browserSync.reload();
 });
